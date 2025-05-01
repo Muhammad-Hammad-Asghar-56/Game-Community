@@ -1,0 +1,85 @@
+extends layout.pug
+
+block content
+  .container.mt-4
+  
+    .row
+      // Left Column - Profile Info
+      .col-md-4.mb-4
+        .card
+          .card-body.text-center
+            h3= user.username
+            p.text-muted= user.email
+            if user.location
+              p
+                i.bi.bi-geo-alt
+                |  #{user.location}
+            if user.website
+              p
+                i.bi.bi-globe
+                |  
+                a(href=user.website target="_blank")= user.website
+
+        .card.mt-3
+          .card-header
+            h5 Edit Profile
+          .card-body
+            form(method="POST" action="/profile/update")
+              .mb-3
+                label.form-label(for="bio") Bio
+                textarea.form-control(
+                  name="bio" 
+                  rows="3"
+                )= user.bio || ''
+              .mb-3
+                label.form-label(for="location") Location
+                input.form-control(
+                  type="text" 
+                  name="location" 
+                  value=user.location || ''
+                )
+              .mb-3
+                label.form-label(for="website") Website
+                input.form-control(
+                  type="url" 
+                  name="website" 
+                  value=user.website || ''
+                )
+              button.btn.btn-primary(type="submit") Save Changes
+
+      // Right Column - User Posts
+      .col-md-8
+        if success
+          .alert.alert-success.alert-dismissible.fade.show
+            = success
+            button.btn-close(type="button" data-bs-dismiss="alert")
+        if error
+          .alert.alert-danger.alert-dismissible.fade.show
+            = error
+            button.btn-close(type="button" data-bs-dismiss="alert")
+
+        .card
+          .card-header.d-flex.justify-content-between.align-items-center
+            h4.mb-0 Your Posts
+            a.btn.btn-sm.btn-success(href="/posts/create")
+              i.bi.bi-plus-lg
+              |  New Post
+          .card-body
+            if posts && posts.length > 0
+              each post in posts
+                .card.mb-3
+                  .card-body
+                    .d-flex.justify-content-between
+                      h5.card-title= post.title
+                      form(method="POST" action=`/profile/posts/delete/${post.id}`)
+                        button.btn.btn-sm.btn-danger(type="submit")
+                          i.bi.bi-trash
+                    p.card-text.mt-3= post.content
+                    small.text-muted
+                      | Posted on #{new Date(post.created_at).toLocaleString()}
+            else
+              .alert.alert-info
+                | You haven't posted anything yet. 
+                a.alert-link(href="/posts/create") Create your first post!
+
+  link(rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css")

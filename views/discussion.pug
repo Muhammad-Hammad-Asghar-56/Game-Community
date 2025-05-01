@@ -1,0 +1,71 @@
+extends layout.pug
+
+block content
+  h1 Discussion Forum
+  .chat-container(style="max-width: 800px; margin: 0 auto;")
+    #messages.card.mb-3(style="height: 400px; overflow-y: scroll;")
+      if messages
+        each msg in messages
+          .message.mb-2
+            strong #{msg.username}: 
+            span #{msg.message}
+    
+    if user
+      form#message-form.mb-3
+        .input-group
+          input#message-input.form-control(
+            type="text" 
+            placeholder="Type your message..." 
+            required
+            autocomplete="off"
+          )
+          button.btn.btn-primary(type="submit") Send
+    else
+      p Please log in to chat.
+
+  script(src="/socket.io/socket.io.js")
+  script.
+    const socket = io();
+    const user = !{JSON.stringify(user || {})};
+    const messagesDiv = document.getElementById('messages');
+
+    // Clear existing messages before loading new ones
+    function clearMessages() {
+        while (messagesDiv.firstChild) {
+            messagesDiv.removeChild(messagesDiv.firstChild);
+        }
+    }
+
+    // Form submission
+    document.getElementById('message-form')?.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const input = document.getElementById('message-input');
+        if (input.value.trim() === '') return;
+        
+        socket.emit('send_message', {
+            username: user.username,
+            message: input.value
+        });
+        input.value = '';
+    });
+
+    // Receive new messages
+    socket.on('receive_message', (data) => {
+        const messageElement = document.createElement('div');
+        messageElement.className = 'message mb-2';
+        messageElement.innerHTML = `<strong>${data.username}:</strong> <span>${data.message}</span>`;
+        messagesDiv.appendChild(messageElement);
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });
+
+    // Load initial messages (clear first)
+    socket.on('load_messages', (messages) => {
+        clearMessages();
+        messages.forEach(msg => {
+            const messageElement = document.createElement('div');
+            messageElement.className = 'message mb-2';
+            messageElement.innerHTML = `<strong>${msg.username}:</strong> <span>${msg.message}</span>`;
+            messagesDiv.appendChild(messageElement);
+        });
+        messagesDiv.scrollTop = messagesDiv.scrollHeight;
+    });

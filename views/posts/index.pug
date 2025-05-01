@@ -1,0 +1,63 @@
+extends ../layout.pug
+
+block content
+  .container
+    .row
+      .col-md-8.mx-auto
+        if user
+          .card.mb-4
+            .card-body
+              h5.card-title Share Your Game Tip
+              form(method="POST" action="/posts/create")
+                .mb-3
+                  input.form-control(type="text" name="title" placeholder="Tip Title" required)
+                .mb-3
+                  textarea.form-control(name="content" placeholder="Your game tip..." rows="3" required)
+                button.btn.btn-primary(type="submit") Post Tip
+        
+        if posts.length > 0
+          each post in posts
+            .card.mb-4
+              .card-body
+                h5.card-title= post.title
+                p.card-text= post.content
+                .d-flex.justify-content-between.align-items-center.mt-3
+                  small.text-muted 
+                    | Posted by #{post.username} 
+                    | on #{new Date(post.created_at).toLocaleString()}
+                  .btn-group
+                    button.btn.btn-sm.btn-outline-primary.like-btn(
+                      data-post-id=post.id
+                    ) 
+                      i.bi.bi-hand-thumbs-up
+                      span.ml-2 #{post.like_count}
+                    a.btn.btn-sm.btn-outline-secondary(
+                      href=`/posts/${post.id}`
+                    )
+                      i.bi.bi-chat
+                      span.ml-2 #{post.comment_count}
+                    button.btn.btn-sm.btn-outline-success
+                      i.bi.bi-share
+          script.
+            document.querySelectorAll('.like-btn').forEach(btn => {
+              btn.addEventListener('click', async function() {
+                const postId = this.dataset.postId;
+                try {
+                  const response = await fetch(`/posts/${postId}/like`, {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json'
+                    }
+                  });
+                  const data = await response.json();
+                  if (data.success) {
+                    const likeCount = this.querySelector('span');
+                    likeCount.textContent = ` ${data.count}`;
+                  }
+                } catch (err) {
+                  console.error('Error:', err);
+                }
+              });
+            });
+        else
+          .alert.alert-info No game tips shared yet. Be the first to post!

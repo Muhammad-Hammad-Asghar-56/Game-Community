@@ -1,0 +1,23 @@
+{
+  "name": "authpugapp",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "nodemon app.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "bcrypt": "^5.1.1",
+    "body-parser": "^2.2.0",
+    "connect-flash": "^0.1.1",
+    "express": "^5.1.0",
+    "express-session": "^1.18.1",
+    "mysql2": "^3.14.1",
+    "nodemon": "^3.1.10",
+    "pug": "^3.0.3",
+    "socket.io": "^4.8.1"
+  }
+}

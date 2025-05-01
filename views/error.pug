@@ -1,0 +1,11 @@
+extends layout.pug
+
+block content
+  .container
+    .row
+      .col-md-6.mx-auto
+        .alert.alert-danger.mt-5
+          h4.alert-heading Error
+          p= message
+          hr
+          a.btn.btn-primary(href='/') Go Home

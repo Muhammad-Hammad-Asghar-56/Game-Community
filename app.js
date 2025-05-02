@@ -17,6 +17,7 @@ const server = http.createServer(app);
 const io = socketIo(server);
 
 // Middleware
+app.use(express.json()); // For parsing application/json
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(session({
     secret: 'your-secret-key',

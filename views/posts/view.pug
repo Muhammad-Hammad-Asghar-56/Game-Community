@@ -12,15 +12,19 @@ block content
               small.text-muted 
                 | Posted by #{post.username} 
                 | on #{new Date(post.created_at).toLocaleString()}
-              .btn-group
-                button.btn.btn-sm.btn-outline-primary.like-btn(
-                  data-post-id=post.id
-                )
-                  i.bi.bi-hand-thumbs-up
-                  span.ml-2 #{post.like_count}
-                button.btn.btn-sm.btn-outline-success
-                  i.bi.bi-share
-        
+              
+              // Star rating component
+              .star-rating(data-post-id=post.id)
+                - for (let i = 5; i >= 1; i--)
+                  input(
+                    type="radio"
+                    id=`star${i}-${post.id}`
+                    name=`rating-${post.id}`
+                    value=i
+                    data-post-id=post.id
+                  )
+                  label(for=`star${i}-${post.id}`) ★
+                
         if user
           .card.mb-4
             .card-body
@@ -36,28 +40,61 @@ block content
             .card.mb-3
               .card-body
                 p.card-text= comment.content
-                small.text-muted
-                  | Commented by #{comment.username} 
-                  | on #{new Date(comment.created_at).toLocaleString()}
+                .d-flex.justify-content-between.align-items-center
+                  small.text-muted
+                    | Commented by #{comment.username} 
+                    | on #{new Date(comment.created_at).toLocaleString()}
+                  
+                  .comment-reactions
+                    button.btn.btn-sm.btn-outline-primary.like-comment(
+                      data-comment-id=comment.id
+                      class=comment.userReaction === 1 ? 'active' : ''
+                    )
+                      i.bi.bi-hand-thumbs-up
+                      span.count #{comment.likeCount || 0}
+                    
+                    button.btn.btn-sm.btn-outline-danger.dislike-comment(
+                      data-comment-id=comment.id
+                      class=comment.userReaction === -1 ? 'active' : ''
+                    )
+                      i.bi.bi-hand-thumbs-down
+                      span.count #{comment.dislikeCount || 0}
         else
           .alert.alert-info No comments yet. Be the first to comment!
 
   script.
-    document.querySelector('.like-btn')?.addEventListener('click', async function() {
-      const postId = this.dataset.postId;
-      try {
-        const response = await fetch(`/posts/${postId}/like`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+    // Comment like/dislike functionality
+    document.querySelectorAll('.like-comment, .dislike-comment').forEach(btn => {
+        btn.addEventListener('click', async function() {
+            const commentId = this.dataset.commentId;
+            const isLike = this.classList.contains('like-comment');
+            
+            try {
+                const response = await fetch(`/posts/comments/${commentId}/${isLike ? 'like' : 'dislike'}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                const data = await response.json();
+                if (data.success) {
+                    // Update UI
+                    const commentElement = this.closest('.comment-reactions');
+                    commentElement.querySelector('.like-comment .count').textContent = data.likeCount || 0;
+                    commentElement.querySelector('.dislike-comment .count').textContent = data.dislikeCount || 0;
+                    
+                    // Toggle active state
+                    if (isLike) {
+                        this.classList.toggle('active');
+                        this.closest('.comment-reactions').querySelector('.dislike-comment').classList.remove('active');
+                    } else {
+                        this.classList.toggle('active');
+                        this.closest('.comment-reactions').querySelector('.like-comment').classList.remove('active');
+                    }
+                }
+            } catch (err) {
+                console.error('Error:', err);
+            }
         });
-        const data = await response.json();
-        if (data.success) {
-          const likeCount = this.querySelector('span');
-          likeCount.textContent = ` ${data.count}`;
-        }
-      } catch (err) {
-        console.error('Error:', err);
-      }
     });

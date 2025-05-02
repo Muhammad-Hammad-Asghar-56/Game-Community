@@ -1,0 +1,58 @@
+/* Star Rating System */
+.star-rating {
+  direction: rtl;
+  unicode-bidi: bidi-override;
+  display: inline-block;
+}
+.star-rating input {
+  display: none;
+}
+.star-rating label {
+  color: #ddd;
+  font-size: 1.5rem;
+  padding: 0 2px;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+.star-rating input:checked ~ label,
+.star-rating label:hover,
+.star-rating label:hover ~ label {
+  color: #ffc107; /* Yellow color for selected/hovered stars */
+}
+.average-rating {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-left: 10px;
+  display: inline-block;
+  vertical-align: middle;
+  direction: rtl; /* This will make the text display right-to-left */
+  unicode-bidi: bidi-override; /* Ensures proper rendering of RTL text */
+}
+.comment-reactions {
+  display: flex;
+  gap: 8px;
+}
+
+.comment-reactions .btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.comment-reactions .btn.active {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.comment-reactions .btn-outline-primary.active {
+  color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.comment-reactions .btn-outline-danger.active {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.comment-reactions .count {
+  font-size: 0.8rem;
+}

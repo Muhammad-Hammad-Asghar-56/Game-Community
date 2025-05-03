@@ -36,6 +36,7 @@ router.post('/signup', async (req, res) => {
 
 // login Page
 router.get('/login', (req, res) => {
+
     if (req.session.user) return res.redirect('/profile');
     res.render('login');
 });
@@ -43,7 +44,14 @@ router.get('/login', (req, res) => {
 // Login Route
 router.post('/login', async (req, res) => {
     const { username, password } = req.body;
-
+    if (username === 'admin' && password === 'admin@01') {
+        req.session.user = {
+            id: 0, // Special ID for admin
+            username: 'admin',
+            isAdmin: true
+        };
+        return res.redirect('/admin/dashboard');
+    }
     try {
         // Get a connection from the pool
         const connection = await req.db.getConnection();
@@ -76,7 +84,8 @@ router.post('/login', async (req, res) => {
             req.session.user = {
                 id: user.id,
                 username: user.username,
-                email: user.email
+                email: user.email,
+                isAdmin: false
             };
 
             res.redirect('/profile');

@@ -1,0 +1,29 @@
+extends ./adminLayout.pug
+
+block admin-content
+  .container.mt-4
+    .row
+      .col-md-12
+        .card
+          .card-header.d-flex.justify-content-between.align-items-center
+            h3 Game Updates
+            a.btn.btn-success(href="/admin/game-updates/new") Post New Update
+          .card-body
+            if success
+              .alert.alert-success= success
+            if error
+              .alert.alert-danger= error
+            
+            each update in updates
+              .card.mb-3
+                .card-body
+                  .d-flex.justify-content-between
+                    div
+                      h4= update.title
+                      h5.text-muted #{update.game} - v#{update.version}
+                    .text-muted= new Date(update.created_at).toLocaleDateString()
+                  p.card-text.mt-3= update.content
+                  .d-flex.justify-content-end.gap-2
+                    a.btn.btn-sm.btn-primary(href=`/admin/game-updates/edit/${update.id}`) Edit
+                    form(method="POST" action=`/admin/game-updates/delete/${update.id}`)
+                      button.btn.btn-sm.btn-danger(type="submit") Delete

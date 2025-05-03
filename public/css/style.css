@@ -56,3 +56,21 @@
 .comment-reactions .count {
   font-size: 0.8rem;
 }
+.xp-display .card {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+.xp-display .card {
+  border-radius: 0.5rem;
+}
+.xp-display .card-title {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+.xp-display .card-text {
+  font-weight: bold;
+}
+.xp-display small {
+  font-size: 0.8rem;
+  opacity: 0.8;
+}

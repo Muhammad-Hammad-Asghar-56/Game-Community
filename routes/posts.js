@@ -2,25 +2,86 @@ const express = require('express');
 const router = express.Router();
 
 
-// Homepage - List all posts
+//                                              Homepage - List all posts
 router.get('/', async (req, res) => {
     try {
-        const [posts] = await req.db.query(`
+        const userId = req.session.user?.id;
+
+        // Base query for all posts with engagement metrics
+        let query = `
             SELECT 
                 p.*,
                 COALESCE(AVG(r.rating), 0) AS average_rating,
-                COUNT(r.id) AS rating_count
+                COUNT(r.id) AS rating_count,
+                COUNT(l.id) AS like_count,
+                COUNT(DISTINCT c.id) AS comment_count,
+                /* Calculate relevance score with multiple factors */
+                (
+                    /* User engagement factors (if logged in) */
+                    CASE WHEN ? IS NOT NULL THEN
+                        /* Boost for posts the user has liked */
+                        CASE WHEN EXISTS (
+                            SELECT 1 FROM likes l 
+                            WHERE l.post_id = p.id AND l.user_id = ?
+                        ) THEN 100 ELSE 0 END +
+                        
+                        /* Boost for posts the user has commented on */
+                        CASE WHEN EXISTS (
+                            SELECT 1 FROM comments c 
+                            WHERE c.post_id = p.id AND c.user_id = ?
+                        ) THEN 50 ELSE 0 END +
+                        
+                        /* Small boost for posts by users you've interacted with */
+                        CASE WHEN EXISTS (
+                            SELECT 1 FROM comments c 
+                            JOIN likes l ON l.post_id = c.post_id
+                            WHERE c.user_id = p.user_id AND l.user_id = ?
+                        ) THEN 30 ELSE 0 END
+                    ELSE 0 END +
+                    
+                    /* Content quality factors */
+                    COALESCE(AVG(r.rating), 0) * 15 +  /* Higher weight for ratings */
+                    
+                    /* Engagement factors */
+                    COUNT(DISTINCT l.id) * 5 +          /* Likes boost */
+                    COUNT(DISTINCT c.id) * 4 +         /* Comments boost */
+                    LOG(1 + COUNT(DISTINCT c.id)) * 10 + /* Diminishing returns for comments */
+                    
+                    /* Recency factor - newer posts get a boost */
+                    (1 - DATEDIFF(NOW(), p.created_at) / 30) * 50  /* More weight to recent posts (within 30 days) */
+                ) AS relevance_score
             FROM posts p
             LEFT JOIN ratings r ON p.id = r.post_id
+            LEFT JOIN likes l ON p.id = l.post_id
+            LEFT JOIN comments c ON p.id = c.post_id
             GROUP BY p.id
-            ORDER BY p.created_at DESC
-        `);
+        `;
+
+        // If user is logged in, personalize recommendations
+        if (userId) {
+            query += `
+                ORDER BY 
+                    relevance_score DESC,
+                    p.created_at DESC
+            `;
+        } else {
+            // For non-logged in users, show most popular and recent
+            query += `
+                ORDER BY 
+                    relevance_score DESC,
+                    p.created_at DESC
+                LIMIT 50  /* Limit for non-logged in users */
+            `;
+        }
+
+        const [posts] = await req.db.query(query, [userId, userId, userId, userId]);
 
         res.render('posts/index', {
             user: req.session.user,
             posts,
             title: 'Game Tips'
         });
+
     } catch (err) {
         console.error(err);
         res.status(500).render('error', { message: 'Failed to load tips' });

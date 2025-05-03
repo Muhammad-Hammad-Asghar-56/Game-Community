@@ -11,7 +11,7 @@ const chatController = require('./controllers/chatController');
 const postRoutes = require('./routes/posts');
 const profileRoutes = require('./routes/profile');
 const flash = require('connect-flash');
-
+const adminRoutes = require('./routes/admin');
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -54,7 +54,7 @@ app.use('/posts', postRoutes);  // All posts routes will be under /posts
 app.use('/', authRoutes);
 app.use('/profile', profileRoutes);
 app.use('/', chatRoutes);
-
+app.use('/admin', adminRoutes);
 
 // Socket.IO
 chatController(io);

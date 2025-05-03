@@ -1,0 +1,34 @@
+extends ./adminLayout.pug
+
+block admin-content
+  .container.mt-4
+    .row
+      .col-md-12
+        .card
+          .card-header
+            h3 Admin Dashboard
+          .card-body
+            .row.text-center
+              .col-md-4
+                .card.text-white.bg-primary.mb-3
+                  .card-body
+                    h5.card-title Total Users
+                    p.card-text.display-4= stats.users
+              .col-md-4
+                .card.text-white.bg-success.mb-3
+                  .card-body
+                    h5.card-title Total Posts
+                    p.card-text.display-4= stats.posts
+              .col-md-4
+                .card.text-white.bg-info.mb-3
+                  .card-body
+                    h5.card-title Total Comments
+                    p.card-text.display-4= stats.comments
+
+            .mt-4
+              h4 Quick Actions
+              .d-flex.flex-wrap.gap-2
+                a.btn.btn-primary(href="/admin/posts") Manage Posts
+                a.btn.btn-secondary(href="/admin/comments") Manage Comments
+                a.btn.btn-success(href="/admin/game-updates") Game Updates
+                a.btn.btn-info(href="/admin/game-updates/new") Post New Update

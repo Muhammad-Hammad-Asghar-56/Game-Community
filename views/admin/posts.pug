@@ -1,0 +1,36 @@
+extends ./adminLayout.pug
+
+block admin-content
+  .container.mt-4
+    .row
+      .col-md-12
+        .card
+          .card-header.d-flex.justify-content-between.align-items-center
+            h3 Post Management
+            a.btn.btn-sm.btn-success(href="/posts/create") Create New Post
+          .card-body
+            if success
+              .alert.alert-success= success
+            if error
+              .alert.alert-danger= error
+            
+            table.table.table-striped
+              thead
+                tr
+                  th ID
+                  th Title
+                  th Author
+                  th Created
+                  th Actions
+              tbody
+                each post in posts
+                  tr
+                    td= post.id
+                    td
+                      a(href=`/posts/${post.id}`)= post.title
+                    td= post.username
+                    td= new Date(post.created_at).toLocaleString()
+                    td
+                      a.btn.btn-sm.btn-primary.me-1(href=`/posts/edit/${post.id}`) Edit
+                      form.d-inline(method="POST" action=`/admin/posts/delete/${post.id}`)
+                        button.btn.btn-sm.btn-danger(type="submit") Delete

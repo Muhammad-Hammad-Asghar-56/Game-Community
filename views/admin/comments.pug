@@ -1,0 +1,36 @@
+extends ./adminLayout.pug
+
+block admin-content
+  .container.mt-4
+    .row
+      .col-md-12
+        .card
+          .card-header
+            h3 Comment Management
+          .card-body
+            if success
+              .alert.alert-success= success
+            if error
+              .alert.alert-danger= error
+            
+            table.table.table-striped
+              thead
+                tr
+                  th ID
+                  th Content
+                  th Author
+                  th Post
+                  th Created
+                  th Actions
+              tbody
+                each comment in comments
+                  tr
+                    td= comment.id
+                    td= comment.content.length > 50 ? comment.content.substring(0, 50) + '...' : comment.content
+                    td= comment.username
+                    td
+                      a(href=`/posts/${comment.post_id}`)= comment.post_title
+                    td= new Date(comment.created_at).toLocaleString()
+                    td
+                      form(method="POST" action=`/admin/comments/delete/${comment.id}`)
+                        button.btn.btn-sm.btn-danger(type="submit") Delete

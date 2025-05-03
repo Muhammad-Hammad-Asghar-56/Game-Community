@@ -1,0 +1,31 @@
+extends ./adminLayout.pug
+
+block admin-content
+  .container.mt-4
+    .row
+      .col-md-8.mx-auto
+        .card
+          .card-header
+            h3= update ? 'Edit Game Update' : 'New Game Update'
+          .card-body
+            form(method="POST" action=update ? `/admin/game-updates/update/${update.id}` : "/admin/game-updates")
+              .mb-3
+                label.form-label(for="title") Update Title
+                input.form-control(type="text" name="title" required value=update ? update.title : '')
+              .row.mb-3
+                .col-md-6
+                  label.form-label(for="game") Game
+                  select.form-select(name="game" required)
+                    option(value="Fortnite" selected=update && update.game === 'Fortnite') Fortnite
+                    option(value="Valorant" selected=update && update.game === 'Valorant') Valorant
+                    option(value="League of Legends" selected=update && update.game === 'League of Legends') League of Legends
+                    option(value="Apex Legends" selected=update && update.game === 'Apex Legends') Apex Legends
+                .col-md-6
+                  label.form-label(for="version") Version
+                  input.form-control(type="text" name="version" required value=update ? update.version : '')
+              .mb-3
+                label.form-label(for="content") Update Content
+                textarea.form-control(name="content" rows="8" required)= update ? update.content : ''
+              .d-flex.justify-content-end
+                a.btn.btn-secondary.me-2(href="/admin/game-updates") Cancel
+                button.btn.btn-primary(type="submit")= update ? 'Update' : 'Publish'

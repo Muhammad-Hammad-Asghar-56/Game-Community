@@ -1,24 +1,128 @@
 const db = require('../db');
 
 module.exports = {
+    // getProfile: async (req, res) => {
+    //     try {
+    //         // Get user profile with XP calculations
+    //         const [user] = await db.query(`
+    //         SELECT u.*, 
+    //         COALESCE(SUM(p.xp_earned), 0) + 
+    //         COALESCE((
+    //             SELECT SUM(c.xp_earned) 
+    //             FROM comments c 
+    //             WHERE c.user_id = u.id
+    //         ), 0) AS total_xp
+    //         FROM users u
+    //         LEFT JOIN posts p ON p.user_id = u.id
+    //         WHERE u.id = ?
+    //         GROUP BY u.id
+    //     `, [req.session.user.id]);
+
+    //         // Get posts with XP details
+    //         const [posts] = await db.query(`
+    //         SELECT p.*, 
+    //         COALESCE(COUNT(r.id), 0) AS rating_count,
+    //         p.xp_earned + COALESCE(COUNT(r.id), 0) AS post_xp
+    //         FROM posts p
+    //         LEFT JOIN ratings r ON p.id = r.post_id
+    //         WHERE p.user_id = ?
+    //         GROUP BY p.id
+    //         ORDER BY p.created_at DESC
+    //     `, [req.session.user.id]);
+
+    //         // Get comments with reaction XP
+    //         const [comments] = await db.query(`
+    //         SELECT c.*,
+    //         COALESCE(SUM(CASE WHEN cr.reaction = 1 THEN 1 ELSE 0 END), 0) AS like_count,
+    //         COALESCE(SUM(CASE WHEN cr.reaction = -1 THEN 1 ELSE 0 END), 0) AS dislike_count,
+    //         c.xp_earned + 
+    //         COALESCE(SUM(CASE WHEN cr.reaction = 1 THEN 2 ELSE 0 END), 0) - 
+    //         COALESCE(SUM(CASE WHEN cr.reaction = -1 THEN 1 ELSE 0 END), 0) AS comment_xp
+    //         FROM comments c
+    //         LEFT JOIN comment_reactions cr ON c.id = cr.comment_id
+    //         WHERE c.user_id = ?
+    //         GROUP BY c.id
+    //     `, [req.session.user.id]);
+
+    //         res.render('profile', {
+    //             user: {
+    //                 ...user[0],
+    //                 xp_points: user[0].total_xp // Add this line
+    //             },
+    //             posts,
+    //             comments,
+    //             success: req.flash('success'),
+    //             error: req.flash('error')
+    //         });
+
+    //     } catch (err) {
+    //         console.error(err);
+    //         res.status(500).render('error', { message: 'Failed to load profile' });
+    //     }
+    // },
+
     getProfile: async (req, res) => {
         try {
-            // Get user profile with their posts
-            const [user] = await db.query(
-                'SELECT * FROM users WHERE id = ?',
-                [req.session.user.id]
-            );
+            // Get basic user info
+            const [user] = await db.query('SELECT * FROM users WHERE id = ?', [req.session.user.id]);
 
-            const [posts] = await db.query(
-                'SELECT * FROM posts WHERE user_id = ? ORDER BY created_at DESC',
-                [req.session.user.id]
-            );
+            // Get all posts with their ratings
+            const [posts] = await db.query(`
+            SELECT p.*, COUNT(r.id) as rating_count 
+            FROM posts p
+            LEFT JOIN ratings r ON p.id = r.post_id
+            WHERE p.user_id = ?
+            GROUP BY p.id
+            ORDER BY p.created_at DESC
+        `, [req.session.user.id]);
+
+            // Get all comments with their reactions
+            const [comments] = await db.query(`
+            SELECT c.*,
+            SUM(CASE WHEN cr.reaction = 1 THEN 1 ELSE 0 END) as like_count,
+            SUM(CASE WHEN cr.reaction = -1 THEN 1 ELSE 0 END) as dislike_count
+            FROM comments c
+            LEFT JOIN comment_reactions cr ON c.id = cr.comment_id
+            WHERE c.user_id = ?
+            GROUP BY c.id
+        `, [req.session.user.id]);
+
+            // Calculate XP manually
+            let totalXp = 0;
+
+            // Calculate posts XP
+            const postsWithXp = posts.map(post => {
+                const postXp = (post.xp_earned || 0) + (post.rating_count || 0);
+                totalXp += postXp;
+                return {
+                    ...post,
+                    post_xp: postXp
+                };
+            });
+
+            // Calculate comments XP
+            const commentsWithXp = comments.map(comment => {
+                const commentXp = (comment.xp_earned || 0) +
+                    ((comment.like_count || 0) * 2) -
+                    (comment.dislike_count || 0);
+                totalXp += commentXp;
+                return {
+                    ...comment,
+                    comment_xp: commentXp
+                };
+            });
 
             res.render('profile', {
-                user: user[0],
-                posts
-                // Removed direct flash references since we're using res.locals
+                user: {
+                    ...user[0],
+                    xp_points: totalXp
+                },
+                posts: postsWithXp,
+                comments: commentsWithXp,
+                success: req.flash('success'),
+                error: req.flash('error')
             });
+
         } catch (err) {
             console.error(err);
             res.status(500).render('error', { message: 'Failed to load profile' });
